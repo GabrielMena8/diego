@@ -5,14 +5,22 @@ from dotenv import load_dotenv
 import os
 from models import Base, Usuario, Transaccion, Vehiculo, Wallet
 
+# Cargar las variables de entorno desde el archivo .env
 load_dotenv()
 
+# Obtener la URL de la base de datos desde las variables de entorno
 DATABASE_URL = os.getenv("DATABASE_URL")
-# Si usas Render, la URL será algo como:
+# Ejemplo de URL para Render:
 # postgresql://user:password@host:5432/database_name
 
+# Crear el motor de la base de datos
 engine = create_engine(DATABASE_URL)
+
+# Crear una sesión local para interactuar con la base de datos
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Crear una clase base para los modelos de SQLAlchemy
+Base = declarative_base()
 
 # Función para obtener la sesión de la base de datos
 def get_db():
