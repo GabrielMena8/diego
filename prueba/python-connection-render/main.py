@@ -6,6 +6,8 @@ from database import init_db, get_db, drop_tables
 from models import Usuario, Transaccion, Vehiculo, Wallet
 from pydantic import BaseModel
 import logging
+from typing import List
+import datetime
 
 # Configurar el registro de logs
 logging.basicConfig(level=logging.INFO)
@@ -175,3 +177,35 @@ def get_vehiculos(db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error fetching vehicles: {e}")
         return {"error": str(e)}
+
+# Modelo Pydantic para la respuesta del Wallet
+class WalletResponse(BaseModel):
+    id: int
+    balance: float
+
+    class Config:
+        orm_mode = True
+
+# Modelo Pydantic para la respuesta del Usuario con Wallet
+class UsuarioWithWalletResponse(BaseModel):
+    ci: int
+    nombre: str
+    email: str
+    ultima_vez_conectado: datetime.datetime
+    wallets: List[WalletResponse]
+
+    class Config:
+        orm_mode = True
+
+# Ruta para obtener un usuario con su wallet
+@app.get("/usuarios/{ci}", response_model=UsuarioWithWalletResponse)
+def get_usuario_with_wallet(ci: int, db: Session = Depends(get_db)):
+    try:
+        logger.info(f"Fetching user with ci: {ci}")
+        usuario = db.query(Usuario).filter(Usuario.ci == ci).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        return usuario
+    except Exception as e:
+        logger.error(f"Error fetching user with wallet: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
